@@ -55,8 +55,8 @@ python generate_alerts.py --input "path/to/file.txt"
 3. **Final Submission:** Documented and reproducible code, a scientific paper in LaTeX, and a declaration of team roles.
 
 ## 👥 Contributors
-- Miguel Angel Vallejo de Bergia (@user1)
-- Bernardo Ordas Cernadas (@user2)
+- Miguel Angel Vallejo de Bergia (@mangelv011)
+- Bernardo Ordas Cernadas (@berordas)
 - Javier Viseras Comin (@JVISERASS)
 
 
