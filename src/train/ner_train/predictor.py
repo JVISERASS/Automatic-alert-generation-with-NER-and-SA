@@ -3,7 +3,7 @@ import spacy
 import pickle
 import os
 import numpy as np
-from torch.cuda.amp import autocast
+from torch.amp import autocast
 import logging  # Import logging
 
 from src.train.ner_train import config
@@ -184,7 +184,17 @@ class PipelinePredictor:
 
         # 6. NER Inference
         with torch.no_grad():
-            with autocast(enabled=config.USE_AMP):
+            # Usar autocast con el parámetro 'cuda' en lugar de enabled=True
+            if self.device.type == "cuda" and config.USE_AMP:
+                with autocast('cuda'):
+                    predictions = self.ner_model(
+                        embeddings=embeddings_batch,
+                        pos_ids=pos_ids_batch,
+                        dep_ids=dep_ids_batch,
+                        char_ids=char_ids_batch,
+                        attention_mask=attention_mask_batch
+                    )
+            else:
                 predictions = self.ner_model(
                     embeddings=embeddings_batch,
                     pos_ids=pos_ids_batch,

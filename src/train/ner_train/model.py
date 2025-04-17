@@ -150,17 +150,20 @@ class NERModel(nn.Module):
         emissions = self.hidden2tag(features)
 
         # 6. Use CRF for loss calculation or decoding
+        # Asegurarse de que la máscara sea booleana explícitamente
+        bool_mask = attention_mask.bool()
+        
         if tags is not None:
             # Training: Calculate negative log-likelihood loss
             # Input emissions: (B, S, N_tags)
             # Input tags: (B, S)
             # Input mask: (B, S) - Boolean mask
-            loss = -self.crf(emissions, tags, mask=attention_mask.byte(), reduction='mean')
+            loss = -self.crf(emissions, tags, mask=bool_mask, reduction='mean')
             return loss
         else:
             # Inference: Decode the most likely tag sequence using Viterbi algorithm
             # Input emissions: (B, S, N_tags)
             # Input mask: (B, S) - Boolean mask
             # Output: List (length B) of lists, each inner list contains predicted tag IDs for a sequence
-            decoded_tags = self.crf.decode(emissions, mask=attention_mask.byte())
+            decoded_tags = self.crf.decode(emissions, mask=bool_mask)
             return decoded_tags
