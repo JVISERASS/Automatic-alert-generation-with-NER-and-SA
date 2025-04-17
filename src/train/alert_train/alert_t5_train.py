@@ -35,8 +35,10 @@ EVAL_STEPS = 20
 SAVE_STEPS = 100
 
 # Define paths
-DATA_PATH = os.path.join("src", "data", "alert_data.txt")
-MODEL_DIR = os.path.join("src", "models", "alert_generator_model")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+DATA_PATH = os.path.join(PROJECT_ROOT, "src", "data", "alert_data.txt")
+MODEL_DIR = os.path.join(PROJECT_ROOT, "src", "models", "alert_generator_model")
 # Eliminando INFERENCE_MODEL_DIR para usar una sola carpeta
 
 def set_seed(seed=42):
