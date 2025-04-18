@@ -30,7 +30,7 @@ def prepare_twitter_sentiment_dataset():
     # Define project structure paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-    output_dir = os.path.join(project_root, "src", "data", "twitter_sentiment")
+    output_dir = os.path.join(project_root, "src", "data", "sentiment_analysis_dataset")
     os.makedirs(output_dir, exist_ok=True)
     
     # Download or use existing dataset
@@ -115,7 +115,7 @@ def prepare_twitter_sentiment_dataset():
     def process_dataframe(df):
         processed_data = []
         
-        for _, row in tqdm(df.iterrows(), total=len(df), desc="Processing tweets"):
+        for _, row in tqdm(df.iterrows(), total=len(df), desc="Processing data"):
             # Extract data from columns
             tweet = str(row["Tweet"]) if not pd.isna(row["Tweet"]) else ""
             entity = str(row["Entity"]) if not pd.isna(row["Entity"]) else ""
@@ -167,17 +167,17 @@ def prepare_twitter_sentiment_dataset():
     test_dataset = process_dataframe(test_df)
     
     # Combine into a DatasetDict
-    twitter_dataset = DatasetDict({
+    processed_dataset = DatasetDict({
         "train": train_dataset,
         "validation": val_dataset,
         "test": test_dataset
     })
     
     # Analyze final distribution
-    for split in twitter_dataset:
+    for split in processed_dataset:
         # Sentiment distribution
-        sentiment_counter = Counter(twitter_dataset[split]["sentiment_label"])
-        total = len(twitter_dataset[split])
+        sentiment_counter = Counter(processed_dataset[split]["sentiment_label"])
+        total = len(processed_dataset[split])
         
         print(f"\n{split.upper()} - Sentiment distribution:")
         for label, count in sorted(sentiment_counter.items()):
@@ -186,7 +186,7 @@ def prepare_twitter_sentiment_dataset():
         
         # NER tag distribution
         ner_counter = Counter()
-        for tags in twitter_dataset[split]["ner_tags"]:
+        for tags in processed_dataset[split]["ner_tags"]:
             ner_counter.update(tags)
         
         print(f"{split.upper()} - NER tags:")
@@ -195,8 +195,8 @@ def prepare_twitter_sentiment_dataset():
             print(f"  {tag}: {count} ({percentage:.2f}%)")
     
     # Save processed dataset
-    output_path = os.path.join(output_dir, "twitter_sentiment_ner")
-    twitter_dataset.save_to_disk(output_path)
+    output_path = os.path.join(output_dir, "joint_ner_sentiment_dataset")
+    processed_dataset.save_to_disk(output_path)
     print(f"\nProcessed dataset saved to {output_path}")
     
     return output_path

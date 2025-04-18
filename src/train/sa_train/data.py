@@ -135,7 +135,7 @@ def collate_fn(batch_list, text_pad_idx, ner_pad_idx):
 # --- Main Data Loading Function ---
 def load_data(batch_size=32, max_len=128, text_vocab=None, ner_vocab=None, sentiment_vocab=None):
     """
-    Loads Twitter data, builds/uses vocabs, and creates dataloaders.
+    Loads sentiment analysis data, builds/uses vocabs, and creates dataloaders.
     
     Args:
         batch_size: Batch size for dataloaders
@@ -147,15 +147,15 @@ def load_data(batch_size=32, max_len=128, text_vocab=None, ner_vocab=None, senti
     # Define project structure paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-    data_dir = os.path.join(project_root, "src", "data", "twitter_sentiment", "twitter_sentiment_ner")
+    data_dir = os.path.join(project_root, "src", "data", "sentiment_analysis_dataset", "joint_ner_sentiment_dataset")
     
     if not os.path.exists(data_dir):
-        print("Twitter sentiment dataset not found. Running preparation script...")
+        print("Sentiment analysis dataset not found. Running preparation script...")
         # Import and run the preparation script
         from prepare_twitter_dataset import prepare_twitter_sentiment_dataset
         data_dir = prepare_twitter_sentiment_dataset()
     
-    print(f"Loading Twitter sentiment dataset from {data_dir}...")
+    print(f"Loading sentiment analysis dataset from {data_dir}...")
     dataset = load_from_disk(data_dir)
     
     # Get available NER tags

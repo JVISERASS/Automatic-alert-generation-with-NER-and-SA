@@ -1,5 +1,5 @@
 import torch
-import logging # Import logging
+import logging
 import os
 
 # --- General ---
@@ -38,7 +38,7 @@ DROPOUT_RATE = 0.5
 
 # --- Training ---
 BATCH_SIZE = 16 # Adjust based on GPU memory
-EPOCHS = 3
+EPOCHS = 30
 LEARNING_RATE = 1e-4 # Initial learning rate for AdamW
 TRANSFORMER_LEARNING_RATE = 2e-5 # Lower learning rate for transformer layers
 WEIGHT_DECAY = 1e-5
@@ -53,7 +53,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "src", "data")
 MODEL_OUTPUT_DIR = os.path.join(PROJECT_ROOT, "src", "models", "ner_model")
 MODEL_SAVE_PATH = os.path.join(MODEL_OUTPUT_DIR, "ner_model_best.pt")
-CACHE_DIR = os.path.join(DATA_DIR, "ner_cache")  # Cambiado a src/data/ner_cache
+CACHE_DIR = os.path.join(DATA_DIR, "ner_cache")  # Changed to src/data/ner_cache
 LOG_DIR = os.path.join(SCRIPT_DIR, "runs")  # Directory for TensorBoard logs
 
 # --- Mappings (will be filled in data_utils) ---

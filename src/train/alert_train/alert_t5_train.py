@@ -28,7 +28,7 @@ MAX_INPUT_LENGTH = 256
 MAX_TARGET_LENGTH = 32
 LEARNING_RATE = 5e-5
 BATCH_SIZE = 8
-NUM_EPOCHS = 10
+NUM_EPOCHS = 150
 WARMUP_STEPS = 50
 WEIGHT_DECAY = 0.01
 EVAL_STEPS = 20
@@ -39,7 +39,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
 DATA_PATH = os.path.join(PROJECT_ROOT, "src", "data", "alert_data.txt")
 MODEL_DIR = os.path.join(PROJECT_ROOT, "src", "models", "alert_generator_model")
-# Eliminando INFERENCE_MODEL_DIR para usar una sola carpeta
+# Removed INFERENCE_MODEL_DIR to use a single folder
 
 def set_seed(seed=42):
     """Set random seeds for reproducibility"""
@@ -231,25 +231,25 @@ def train_model(datasets, tokenizer, model, output_dir):
 
 def optimize_model_for_inference(model_dir):
     """
-    Optimiza el modelo para inferencia, eliminando artefactos de entrenamiento
-    y guardando solo los componentes esenciales en la misma carpeta.
+    Optimize the model for inference, removing training artifacts
+    and saving only essential components in the same folder.
     
     Args:
-        model_dir: Directorio del modelo
+        model_dir: Model directory
     """
-    print(f"Optimizando modelo para inferencia en {model_dir}")
+    print(f"Optimizing model for inference in {model_dir}")
     
     # Create a temporary directory for optimization
     temp_dir = os.path.join(model_dir, "temp_optimization")
     os.makedirs(temp_dir, exist_ok=True)
     
     try:
-        # Cargar modelo y tokenizer
+        # Load model and tokenizer
         model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
         tokenizer = AutoTokenizer.from_pretrained(model_dir)
         
-        # Guardar modelo en formato optimizado en directorio temporal
-        print(f"Guardando modelo en directorio temporal: {temp_dir}")
+        # Save model in optimized format in temporary directory
+        print(f"Saving model in temporary directory: {temp_dir}")
         model.save_pretrained(
             temp_dir,
             is_main_process=True,
@@ -258,10 +258,10 @@ def optimize_model_for_inference(model_dir):
             safe_serialization=False  # Disable safetensors to avoid file access issues
         )
         
-        # Guardar tokenizer en directorio temporal
+        # Save tokenizer in temporary directory
         tokenizer.save_pretrained(temp_dir)
         
-        # Eliminar artefactos de entrenamiento del directorio original
+        # Remove training artifacts from original directory
         training_artifacts = [
             "optimizer.pt", 
             "rng_state.pth", 
@@ -273,19 +273,19 @@ def optimize_model_for_inference(model_dir):
         for file in training_artifacts:
             file_path = os.path.join(model_dir, file)
             if os.path.exists(file_path):
-                print(f"Eliminando artefacto de entrenamiento: {file_path}")
+                print(f"Removing training artifact: {file_path}")
                 os.remove(file_path)
         
-        # Eliminar checkpoints del directorio original
+        # Remove checkpoints from original directory
         for item in os.listdir(model_dir):
             if item.startswith("checkpoint-"):
                 checkpoint_dir = os.path.join(model_dir, item)
                 if os.path.isdir(checkpoint_dir):
-                    print(f"Eliminando checkpoint: {checkpoint_dir}")
+                    print(f"Removing checkpoint: {checkpoint_dir}")
                     shutil.rmtree(checkpoint_dir)
         
-        # Copiar los archivos desde el directorio temporal al directorio original
-        print(f"Copiando archivos optimizados de {temp_dir} a {model_dir}")
+        # Copy files from temporary directory to original directory
+        print(f"Copying optimized files from {temp_dir} to {model_dir}")
         for item in os.listdir(temp_dir):
             source = os.path.join(temp_dir, item)
             destination = os.path.join(model_dir, item)
@@ -297,17 +297,17 @@ def optimize_model_for_inference(model_dir):
             else:
                 shutil.copy2(source, destination)
         
-        print("Modelo optimizado y checkpoints eliminados exitosamente")
+        print("Model optimized and checkpoints successfully removed")
     except Exception as e:
-        print(f"Error durante la optimización del modelo: {str(e)}")
+        print(f"Error during model optimization: {str(e)}")
         raise
     finally:
-        # Limpiar directorio temporal
+        # Clean up temporary directory
         if os.path.exists(temp_dir):
-            print(f"Eliminando directorio temporal: {temp_dir}")
+            print(f"Removing temporary directory: {temp_dir}")
             shutil.rmtree(temp_dir)
     
-    # Volver a cargar el modelo optimizado
+    # Reload the optimized model
     model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     

@@ -162,10 +162,10 @@ def main():
     MODEL_SAVE_DIR = os.path.join(PROJECT_ROOT, "src", "models", "sa_model")
     DATA_DIR = os.path.join(PROJECT_ROOT, "src", "data")
     VOCAB_SAVE_DIR = os.path.join(DATA_DIR, "sa_vocabs")
-    MODEL_PATH = os.path.join(MODEL_SAVE_DIR, "best_model_twitter_sentiment_ner.pth")
-    TEXT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "twitter_text_vocab.pkl")
-    NER_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "twitter_ner_vocab.pkl")
-    SENTIMENT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "twitter_sentiment_vocab.pkl")
+    MODEL_PATH = os.path.join(MODEL_SAVE_DIR, "sentiment_analysis_model.pth")
+    TEXT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "sentiment_text_vocabulary.pkl")
+    NER_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "sentiment_ner_tags_vocabulary.pkl")
+    SENTIMENT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "sentiment_labels_vocabulary.pkl")
 
     # --- Hyperparameters ---
     BATCH_SIZE = 32
@@ -178,7 +178,7 @@ def main():
     DROPOUT = 0.5
 
     # --- Load Vocabularies ---
-    print(f"Loading Twitter vocabularies from {VOCAB_SAVE_DIR}...")
+    print(f"Loading sentiment analysis vocabularies from {VOCAB_SAVE_DIR}...")
     text_vocab = load_vocab_with_default(TEXT_VOCAB_PATH, unk_token='<UNK>')
     ner_vocab = load_vocab_with_default(NER_VOCAB_PATH, unk_token='O')
     sentiment_vocab = load_vocab_with_default(SENTIMENT_VOCAB_PATH, unk_token='NEU')
@@ -194,12 +194,12 @@ def main():
     print(f"Sentiment classes: {sentiment_vocab_inverse}")
 
     # --- Load Test Data ---
-    print("Loading Twitter test data...")
+    print("Loading sentiment analysis test data...")
     
     try:
         from prepare_twitter_dataset import prepare_twitter_sentiment_dataset
-        if not os.path.exists(os.path.join(DATA_DIR, "twitter_sentiment/twitter_sentiment_ner")):
-            print("Twitter dataset not found, generating it first...")
+        if not os.path.exists(os.path.join(DATA_DIR, "sentiment_analysis_dataset/joint_ner_sentiment_dataset")):
+            print("Sentiment analysis dataset not found, generating it first...")
             prepare_twitter_sentiment_dataset()
     except Exception as e:
         print(f"Warning: Could not prepare dataset: {e}")

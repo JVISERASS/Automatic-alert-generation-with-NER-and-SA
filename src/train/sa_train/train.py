@@ -24,12 +24,12 @@ def main():
     MODEL_SAVE_DIR = os.path.join(PROJECT_ROOT, "src", "models", "sa_model")
     DATA_DIR = os.path.join(PROJECT_ROOT, "src", "data")
     VOCAB_SAVE_DIR = os.path.join(DATA_DIR, "sa_vocabs")
-    BEST_MODEL_PATH = os.path.join(MODEL_SAVE_DIR, "best_model_twitter_sentiment_ner.pth")
-    RUNS_DIR = os.path.join(SCRIPT_DIR, "./runs/twitter_sentiment_ner_experiment")
+    BEST_MODEL_PATH = os.path.join(MODEL_SAVE_DIR, "sentiment_analysis_model.pth")
+    RUNS_DIR = os.path.join(SCRIPT_DIR, "./runs/sentiment_analysis_experiment")
     
-    TEXT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "twitter_text_vocab.pkl")
-    NER_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "twitter_ner_vocab.pkl")
-    SENTIMENT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "twitter_sentiment_vocab.pkl")
+    TEXT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "sentiment_text_vocabulary.pkl")
+    NER_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "sentiment_ner_tags_vocabulary.pkl")
+    SENTIMENT_VOCAB_PATH = os.path.join(VOCAB_SAVE_DIR, "sentiment_labels_vocabulary.pkl")
     
     os.makedirs(MODEL_SAVE_DIR, exist_ok=True)
     os.makedirs(VOCAB_SAVE_DIR, exist_ok=True)
@@ -43,16 +43,16 @@ def main():
     N_LAYERS = 2
     BIDIRECTIONAL = True
     DROPOUT = 0.5
-    LEARNING_RATE = 0.0002
+    LEARNING_RATE = 0.002
     WEIGHT_DECAY = 3e-5
-    EPOCHS = 3
+    EPOCHS = 70
     PATIENCE = 7
 
     # --- Prepare Twitter dataset ---
     prepare_twitter_sentiment_dataset()
 
     # --- Data Loading ---
-    print("Loading Twitter sentiment data...")
+    print("Loading sentiment analysis data...")
     train_loader, val_loader, test_loader, text_vocab, ner_vocab, sentiment_vocab = load_data(
         batch_size=BATCH_SIZE,
         max_len=MAX_LEN,
@@ -64,17 +64,17 @@ def main():
     with open(TEXT_VOCAB_PATH, 'wb') as f:
         text_vocab_dict = dict(text_vocab)
         pickle.dump(text_vocab_dict, f)
-        print(f"Saved Twitter text vocab with {len(text_vocab_dict)} items to {TEXT_VOCAB_PATH}")
+        print(f"Saved text vocabulary with {len(text_vocab_dict)} items to {TEXT_VOCAB_PATH}")
     
     with open(NER_VOCAB_PATH, 'wb') as f:
         ner_vocab_dict = dict(ner_vocab)
         pickle.dump(ner_vocab_dict, f)
-        print(f"Saved Twitter NER vocab with {len(ner_vocab_dict)} items to {NER_VOCAB_PATH}")
+        print(f"Saved NER tags vocabulary with {len(ner_vocab_dict)} items to {NER_VOCAB_PATH}")
     
     with open(SENTIMENT_VOCAB_PATH, 'wb') as f:
         sentiment_vocab_dict = dict(sentiment_vocab)
         pickle.dump(sentiment_vocab_dict, f)
-        print(f"Saved Twitter sentiment vocab with {len(sentiment_vocab_dict)} items to {SENTIMENT_VOCAB_PATH}")
+        print(f"Saved sentiment labels vocabulary with {len(sentiment_vocab_dict)} items to {SENTIMENT_VOCAB_PATH}")
     
     # --- Analysis of sentiment labels ---
     sentiment_vocab_inverse = {v: k for k, v in sentiment_vocab.items()}

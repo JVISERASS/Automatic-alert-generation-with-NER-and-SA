@@ -1,7 +1,11 @@
-src/data/
+src/data/ner_cache
+src/models
+src/data/sa_vocabs
+src/data/sentiment_analysis_dataset
+src/data/twitter_sentiment
 example_code/
-src/models/
 src/train/ner_train/runs
+src/train/sa_train/runs
 **/__pycache__/
 *.py[cod]
 *$py.class

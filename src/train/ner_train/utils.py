@@ -3,9 +3,9 @@ from seqeval.metrics import classification_report, f1_score
 import numpy as np
 import random
 from src.train.ner_train import config
-import logging # Import logging
+import logging
 
-logger = config.get_logger(__name__) # Get logger instance
+logger = config.get_logger(__name__)
 
 def set_seed(seed):
     """Sets random seeds for reproducibility."""
