@@ -7,7 +7,6 @@ import numpy as np
 import time
 import os
 import datetime # For run names
-import logging # Import logging
 
 # Modificando los imports para usar rutas relativas al paquete
 from src.train.ner_train import config
@@ -15,8 +14,6 @@ from src.train.ner_train import utils
 # Import data_utils here, ensuring config is loaded first
 from src.train.ner_train import data_utils
 from src.train.ner_train.model import NERModel
-
-logger = config.get_logger(__name__) # Get logger instance
 
 def train_epoch(model, dataloader, optimizer, scaler, device):
     """Performs one training epoch."""
@@ -36,7 +33,7 @@ def train_epoch(model, dataloader, optimizer, scaler, device):
             ner_ids = batch['ner_ids'].to(device, non_blocking=True) # Ground truth tags
             attention_mask = batch['attention_mask'].to(device, non_blocking=True) # Mask for CRF/padding
         except Exception as e:
-            logger.error(f"Error moving batch to device: {e}", exc_info=True)
+            print(f"[ERROR] - {__name__} - Error moving batch to device: {e}")
             continue # Skip batch if error occurs
 
         optimizer.zero_grad() # Reset gradients
@@ -55,7 +52,7 @@ def train_epoch(model, dataloader, optimizer, scaler, device):
 
         # Check for NaN loss
         if torch.isnan(loss):
-            logger.warning("NaN loss detected! Skipping batch.")
+            print(f"[WARNING] - {__name__} - NaN loss detected! Skipping batch.")
             continue
 
         # Backward pass with gradient scaling (for AMP)
@@ -79,7 +76,7 @@ def train_epoch(model, dataloader, optimizer, scaler, device):
 
     avg_loss = total_loss / len(dataloader) if len(dataloader) > 0 else 0
     epoch_time = time.time() - start_time
-    logger.info(f"Train Loss: {avg_loss:.4f}, Time: {epoch_time:.2f}s")
+    print(f"[INFO] - {__name__} - Train Loss: {avg_loss:.4f}, Time: {epoch_time:.2f}s")
     return avg_loss
 
 def evaluate_epoch(model, dataloader, device, id_to_ner, return_examples=False, num_examples=10):
@@ -102,7 +99,7 @@ def evaluate_epoch(model, dataloader, device, id_to_ner, return_examples=False, 
                 ner_ids = batch['ner_ids'].to(device, non_blocking=True) # Ground truth tags
                 attention_mask = batch['attention_mask'].to(device, non_blocking=True)
             except Exception as e:
-                logger.error(f"Error moving batch to device during evaluation: {e}", exc_info=True)
+                print(f"[ERROR] - {__name__} - Error moving batch to device during evaluation: {e}")
                 continue # Skip batch
 
             # Original text data remains on CPU
@@ -166,7 +163,7 @@ def evaluate_epoch(model, dataloader, device, id_to_ner, return_examples=False, 
     avg_loss = total_loss / len(dataloader) if len(dataloader) > 0 else 0
     metrics = utils.calculate_metrics(all_trues_ids, all_preds_ids, id_to_ner)
 
-    logger.info(f"Eval Loss: {avg_loss:.4f}, F1 (macro): {metrics['f1']:.4f}")
+    print(f"[INFO] - {__name__} - Eval Loss: {avg_loss:.4f}, F1 (macro): {metrics['f1']:.4f}")
 
     # Return results
     if return_examples:
@@ -179,7 +176,7 @@ def main():
     """Main training and evaluation script."""
     # Set random seed for reproducibility
     utils.set_seed(config.SEED)
-    logger.info(f"Using device: {config.DEVICE}")
+    print(f"[INFO] - {__name__} - Using device: {config.DEVICE}")
 
     # --- TensorBoard Setup ---
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -187,25 +184,25 @@ def main():
     log_dir = os.path.join(config.LOG_DIR, run_name)
     try:
         writer = SummaryWriter(log_dir=log_dir)
-        logger.info(f"TensorBoard logs will be saved to: {log_dir}")
+        print(f"[INFO] - {__name__} - TensorBoard logs will be saved to: {log_dir}")
     except Exception as e:
-        logger.error(f"Error initializing TensorBoard SummaryWriter: {e}", exc_info=True)
+        print(f"[ERROR] - {__name__} - Error initializing TensorBoard SummaryWriter: {e}")
         return # Exit if TensorBoard setup fails
 
     # --- Load Data ---
-    logger.info("Loading data...")
+    print(f"[INFO] - {__name__} - Loading data...")
     try:
         train_loader, val_loader, test_loader = data_utils.get_dataloaders(config.BATCH_SIZE)
-        logger.info("Data loaded successfully.")
+        print(f"[INFO] - {__name__} - Data loaded successfully.")
     except Exception as e:
-        logger.error(f"Failed to load data: {e}", exc_info=True)
+        print(f"[ERROR] - {__name__} - Failed to load data: {e}")
         return # Exit if data loading fails
 
     # --- Initialize Model ---
-    logger.info("Initializing model...")
+    print(f"[INFO] - {__name__} - Initializing model...")
     # Ensure vocabs are loaded (get_dataloaders should handle this via preprocess_data)
     if not config.pos_vocab or not config.dep_vocab or not config.ner_vocab or not config.char_vocab:
-        logger.error("Vocabularies not loaded after data loading. Exiting.")
+        print(f"[ERROR] - {__name__} - Vocabularies not loaded after data loading. Exiting.")
         return
 
     try:
@@ -215,9 +212,9 @@ def main():
             dep_vocab_size=len(config.dep_vocab),
             char_vocab_size=len(config.char_vocab)
         ).to(config.DEVICE)
-        logger.info("Model initialized successfully.")
+        print(f"[INFO] - {__name__} - Model initialized successfully.")
     except Exception as e:
-        logger.error(f"Failed to initialize model: {e}", exc_info=True)
+        print(f"[ERROR] - {__name__} - Failed to initialize model: {e}")
         return
 
     # --- Optimizer ---
@@ -226,27 +223,27 @@ def main():
         lr=config.LEARNING_RATE,
         weight_decay=config.WEIGHT_DECAY
     )
-    logger.info(f"Optimizer: AdamW (LR={config.LEARNING_RATE}, WeightDecay={config.WEIGHT_DECAY})")
+    print(f"[INFO] - {__name__} - Optimizer: AdamW (LR={config.LEARNING_RATE}, WeightDecay={config.WEIGHT_DECAY})")
 
     # --- GradScaler for Mixed Precision ---
     scaler = GradScaler(enabled=config.USE_AMP)
-    logger.info(f"Automatic Mixed Precision (AMP) enabled: {config.USE_AMP}")
+    print(f"[INFO] - {__name__} - Automatic Mixed Precision (AMP) enabled: {config.USE_AMP}")
 
     # --- Training Loop Setup ---
     best_val_f1 = -1.0 # Initialize best F1 score
     epochs_no_improve = 0 # Counter for early stopping
     id_to_ner = data_utils.get_id_to_ner() # Get ID to tag mapping for evaluation
     if not id_to_ner:
-        logger.error("Failed to get id_to_ner mapping. Exiting.")
+        print(f"[ERROR] - {__name__} - Failed to get id_to_ner mapping. Exiting.")
         return
 
-    logger.info("Starting training...")
+    print(f"[INFO] - {__name__} - Starting training...")
     final_epoch = 0 # Track the last completed epoch
     training_start_time = time.time()
 
     for epoch in range(config.EPOCHS):
         final_epoch = epoch # Update last completed epoch
-        logger.info(f"--- Epoch {epoch+1}/{config.EPOCHS} ---")
+        print(f"[INFO] - {__name__} - --- Epoch {epoch+1}/{config.EPOCHS} ---")
 
         # --- Training Step ---
         train_loss = train_epoch(model, train_loader, optimizer, scaler, config.DEVICE)
@@ -261,27 +258,27 @@ def main():
 
         # --- Checkpoint Saving & Early Stopping ---
         if val_f1 > best_val_f1:
-            logger.info(f"Validation F1 improved ({best_val_f1:.4f} --> {val_f1:.4f}). Saving model...")
+            print(f"[INFO] - {__name__} - Validation F1 improved ({best_val_f1:.4f} --> {val_f1:.4f}). Saving model...")
             best_val_f1 = val_f1
             try:
                 torch.save(model.state_dict(), config.MODEL_SAVE_PATH)
             except Exception as e:
-                logger.error(f"Error saving model checkpoint: {e}", exc_info=True)
+                print(f"[ERROR] - {__name__} - Error saving model checkpoint: {e}")
             epochs_no_improve = 0 # Reset counter
         else:
             epochs_no_improve += 1
-            logger.info(f"Validation F1 did not improve. ({epochs_no_improve}/{config.EARLY_STOPPING_PATIENCE})")
+            print(f"[INFO] - {__name__} - Validation F1 did not improve. ({epochs_no_improve}/{config.EARLY_STOPPING_PATIENCE})")
 
         # Check for early stopping
         if epochs_no_improve >= config.EARLY_STOPPING_PATIENCE:
-            logger.info(f"Early stopping triggered after {epoch+1} epochs.")
+            print(f"[INFO] - {__name__} - Early stopping triggered after {epoch+1} epochs.")
             break
 
     training_duration = time.time() - training_start_time
-    logger.info(f"Training finished after {final_epoch + 1} epochs. Total time: {training_duration:.2f}s")
+    print(f"[INFO] - {__name__} - Training finished after {final_epoch + 1} epochs. Total time: {training_duration:.2f}s")
 
     # --- Final Evaluation on Test Set ---
-    logger.info("--- Evaluating on Test Set using Best Model ---")
+    print(f"[INFO] - {__name__} - --- Evaluating on Test Set using Best Model ---")
     # Load the best model saved during training
     if os.path.exists(config.MODEL_SAVE_PATH):
         try:
@@ -296,12 +293,12 @@ def main():
             model.load_state_dict(torch.load(config.MODEL_SAVE_PATH, map_location=config.DEVICE))
             model.to(config.DEVICE) # Move loaded model to device
             model.eval() # Set to evaluation mode
-            logger.info(f"Loaded best model from {config.MODEL_SAVE_PATH} for final evaluation.")
+            print(f"[INFO] - {__name__} - Loaded best model from {config.MODEL_SAVE_PATH} for final evaluation.")
         except Exception as e:
-            logger.error(f"Error loading best model state dict: {e}. Evaluating with the last state.", exc_info=True)
+            print(f"[ERROR] - {__name__} - Error loading best model state dict: {e}. Evaluating with the last state.")
             model.eval() # Ensure it's in eval mode anyway
     else:
-        logger.warning("Best model checkpoint not found. Evaluating with the model's last state.")
+        print(f"[WARNING] - {__name__} - Best model checkpoint not found. Evaluating with the model's last state.")
         model.eval() # Ensure it's in eval mode
 
     # Perform evaluation on the test set, requesting examples
@@ -309,8 +306,8 @@ def main():
         test_loss, test_f1, test_report, test_examples = evaluate_epoch(
             model, test_loader, config.DEVICE, id_to_ner, return_examples=True, num_examples=10
         )
-        logger.info(f"Final Test Results - Loss: {test_loss:.4f}, F1 (macro): {test_f1:.4f}")
-        logger.info(f"Final Test Classification Report:\n{test_report}")
+        print(f"[INFO] - {__name__} - Final Test Results - Loss: {test_loss:.4f}, F1 (macro): {test_f1:.4f}")
+        print(f"[INFO] - {__name__} - Final Test Classification Report:\n{test_report}")
 
         # --- Log Final Metrics and Report to TensorBoard ---
         writer.add_scalar('F1/test', test_f1, 0) # Use step 0 for final test metrics
@@ -334,7 +331,7 @@ def main():
         writer.add_hparams(scalar_hparams, metrics_dict, run_name=log_dir) # Associate with the current run
 
         # --- Display Prediction Examples ---
-        logger.info("--- Prediction Examples (Test Set) ---")
+        print(f"[INFO] - {__name__} - --- Prediction Examples (Test Set) ---")
         for i, example in enumerate(test_examples):
             example_log = f"\nExample {i+1}:\n"
             header = f"{'Token':<15} | {'True NER':<10} | {'Predicted NER':<10}\n"
@@ -342,15 +339,15 @@ def main():
             example_log += header + separator
             for token, true_tag, pred_tag in zip(example['tokens'], example['true_tags'], example['pred_tags']):
                 example_log += f"{token:<15} | {true_tag:<10} | {pred_tag:<10}\n"
-            logger.info(example_log)
+            print(f"[INFO] - {__name__} - {example_log}")
 
     except Exception as e:
-        logger.error(f"Error during final test evaluation: {e}", exc_info=True)
+        print(f"[ERROR] - {__name__} - Error during final test evaluation: {e}")
 
     # --- Cleanup ---
     writer.close() # Close the TensorBoard writer
-    logger.info("TensorBoard writer closed.")
-    logger.info("Cleaning up resources...")
+    print(f"[INFO] - {__name__} - TensorBoard writer closed.")
+    print(f"[INFO] - {__name__} - Cleaning up resources...")
     # Explicitly delete large objects to potentially help GC
     del model
     del optimizer
@@ -360,11 +357,11 @@ def main():
     if config.DEVICE.type == 'cuda':
         try:
             torch.cuda.empty_cache()
-            logger.info("CUDA cache cleared.")
+            print(f"[INFO] - {__name__} - CUDA cache cleared.")
         except Exception as e:
-            logger.warning(f"Error clearing CUDA cache: {e}")
+            print(f"[WARNING] - {__name__} - Error clearing CUDA cache: {e}")
 
-    logger.info("Script finished.")
+    print(f"[INFO] - {__name__} - Script finished.")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 src/data/ner_cache
 src/models
+train_results
 src/data/sa_vocabs
 src/data/sentiment_analysis_dataset
 src/data/twitter_sentiment

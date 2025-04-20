@@ -9,16 +9,11 @@ import os
 import sys
 import json
 import torch
-import logging
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from colorama import Fore, Style, init
 
 # Initialize colorama
 init()
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-logger = logging.getLogger(__name__)
 
 # Add the path to the src directory to import modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -36,7 +31,7 @@ def load_ner_model():
         raise FileNotFoundError(f"Error: NER model not found at {model_path}")
     
     predictor = PipelinePredictor(model_path=model_path, vocab_cache_dir=vocab_cache_dir)
-    logger.info(f"NER model successfully loaded from {model_path}")
+    print(f"[INFO]: NER model successfully loaded from {model_path}")
     
     return predictor
 
@@ -86,8 +81,8 @@ def load_vocabularies(vocab_dir):
     # Create inverse mapping for sentiment labels
     sentiment_vocab_inverse = {v: k for k, v in sentiment_vocab.items()}
     
-    logger.info(f"Vocabularies successfully loaded from {vocab_dir}")
-    logger.info(f"Sizes: text={len(text_vocab)}, NER={len(ner_vocab)}, sentiment={len(sentiment_vocab)}")
+    print(f"[INFO]: Vocabularies successfully loaded from {vocab_dir}")
+    print(f"[INFO]: Sizes: text={len(text_vocab)}, NER={len(ner_vocab)}, sentiment={len(sentiment_vocab)}")
     
     return text_vocab, ner_vocab, sentiment_vocab, sentiment_vocab_inverse
 
@@ -123,7 +118,7 @@ def load_sa_model():
     model.to(device)
     model.eval()
     
-    logger.info(f"SA model successfully loaded from {model_path}")
+    print(f"[INFO]: SA model successfully loaded from {model_path}")
     
     return model, text_vocab, ner_vocab, sentiment_vocab, sentiment_vocab_inverse, device
 
@@ -146,11 +141,11 @@ def load_alert_generator_model():
         model.to(device)
         model.eval()
         
-        logger.info(f"Alert generator model successfully loaded from {model_dir}")
+        print(f"[INFO]: Alert generator model successfully loaded from {model_dir}")
         
         return model, tokenizer, device
     except Exception as e:
-        logger.error(f"Error loading alert generator model: {e}")
+        print(f"[ERROR]: Error loading alert generator model: {e}")
         raise
 
 def predict_sentiment(sa_model, text, ner_tags, text_vocab, ner_vocab, sentiment_vocab_inverse, device):
@@ -277,28 +272,28 @@ def main():
     """Main function to perform the complete inference pipeline."""
     try:
         # Load the three models
-        logger.info("Loading models...")
+        print("[INFO]: Loading models...")
         ner_predictor = load_ner_model()
         sa_model, text_vocab, ner_vocab, sentiment_vocab, sentiment_vocab_inverse, sa_device = load_sa_model()
         alert_model, alert_tokenizer, alert_device = load_alert_generator_model()
-        logger.info("All models successfully loaded")
+        print("[INFO]: All models successfully loaded")
         
         # Load input data
         input_file = os.path.join(ner_config.DATA_DIR, "news_tweets.txt")
         if not os.path.exists(input_file):
-            logger.error(f"Error: Input file not found at {input_file}")
+            print(f"[ERROR]: Error: Input file not found at {input_file}")
             return
         
         # Read text file
         with open(input_file, 'r', encoding='utf-8') as f:
             lines = [line.strip() for line in f.readlines() if line.strip()]
         
-        logger.info(f"Loaded {len(lines)} lines to process")
+        print(f"[INFO]: Loaded {len(lines)} lines to process")
         
         # Process each line
         num_examples = len(lines)  
         for i, text in enumerate(lines[:num_examples], 1):
-            logger.info(f"Processing text {i}/{num_examples}: '{text[:50]}...'")
+            print(f"[INFO]: Processing text {i}/{num_examples}: '{text[:50]}...'")
             
             # 1. Named Entity Recognition (NER)
             # Use the public prediction method instead of the private method
@@ -331,12 +326,12 @@ def main():
                 "alert": alert
             }
         
-        logger.info("Processing completed")
+        print("[INFO]: Processing completed")
     
     except FileNotFoundError as e:
-        logger.error(f"Error: {e}")
+        print(f"[ERROR]: Error: {e}")
     except Exception as e:
-        logger.error(f"Error during inference: {e}")
+        print(f"[ERROR]: Error during inference: {e}")
         import traceback
         traceback.print_exc()
 

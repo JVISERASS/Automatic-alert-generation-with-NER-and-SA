@@ -1,10 +1,9 @@
 import torch
-import logging
 import os
 
 # --- General ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# Removed device print statement, will be logged elsewhere if needed
+# Removed device print statement, will be printed elsewhere if needed
 SEED = 42
 
 # --- Dataset ---
@@ -38,7 +37,7 @@ DROPOUT_RATE = 0.5
 
 # --- Training ---
 BATCH_SIZE = 16 # Adjust based on GPU memory
-EPOCHS = 30
+EPOCHS = 70
 LEARNING_RATE = 1e-4 # Initial learning rate for AdamW
 TRANSFORMER_LEARNING_RATE = 2e-5 # Lower learning rate for transformer layers
 WEIGHT_DECAY = 1e-5
@@ -62,10 +61,42 @@ dep_vocab = {}
 ner_vocab = {}
 char_vocab = {}
 
-# --- Logging Setup ---
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+# Create directories if they don't exist
+os.makedirs(MODEL_OUTPUT_DIR, exist_ok=True)
+os.makedirs(CACHE_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
 
+# Print setup function for consistent output formatting
 def get_logger(name):
-    """Gets a logger instance."""
-    return logging.getLogger(name)
+    """Returns a print wrapper to replace the logger."""
+    class PrintLogger:
+        def __init__(self, prefix):
+            self.prefix = prefix
+        
+        def info(self, message):
+            print(f"[INFO] - {self.prefix} - {message}")
+            
+        def warning(self, message):
+            print(f"[WARNING] - {self.prefix} - {message}")
+            
+        def error(self, message, exc_info=False):
+            if exc_info:
+                import traceback
+                print(f"[ERROR] - {self.prefix} - {message}")
+                traceback.print_exc()
+            else:
+                print(f"[ERROR] - {self.prefix} - {message}")
+            
+        def debug(self, message):
+            # Debug messages can be enabled by uncommenting this
+            # print(f"[DEBUG] - {self.prefix} - {message}")
+            pass
+    
+    return PrintLogger(name)
+
+# Print configuration summary
+print(f"[CONFIG] - NER training configuration loaded")
+print(f"[CONFIG] - Device: {DEVICE}")
+print(f"[CONFIG] - Batch size: {BATCH_SIZE}")
+print(f"[CONFIG] - Learning rate: {LEARNING_RATE}")
+print(f"[CONFIG] - Model will be saved to: {MODEL_SAVE_PATH}")

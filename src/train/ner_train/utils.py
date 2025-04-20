@@ -3,8 +3,8 @@ from seqeval.metrics import classification_report, f1_score
 import numpy as np
 import random
 from src.train.ner_train import config
-import logging
 
+# Use the PrintLogger from config instead of logging
 logger = config.get_logger(__name__)
 
 def set_seed(seed):
@@ -18,6 +18,7 @@ def set_seed(seed):
         # Settings for ensuring determinism (may affect performance)
         # torch.backends.cudnn.deterministic = True
         # torch.backends.cudnn.benchmark = False
+    print(f"[INFO] - {__name__} - Random seed set to {seed} for reproducibility")
 
 def build_vocab(tags_list):
     """Builds a vocabulary from a list of tag sequences."""
@@ -28,6 +29,7 @@ def build_vocab(tags_list):
             if tag not in vocab:
                 vocab[tag] = idx
                 idx += 1
+    print(f"[INFO] - {__name__} - Built vocabulary with {len(vocab)} tags")
     return vocab
 
 def build_char_vocab(tokens_list):
@@ -40,6 +42,7 @@ def build_char_vocab(tokens_list):
                 if char not in vocab:
                     vocab[char] = idx
                     idx += 1
+    print(f"[INFO] - {__name__} - Built character vocabulary with {len(vocab)} characters")
     return vocab
 
 def tags_to_ids(tags, vocab):
@@ -93,7 +96,7 @@ def calculate_metrics(y_true, y_pred, id_to_ner):
     pred_sequences = [pred_sequences[i] for i in valid_indices]
 
     if not true_sequences or not pred_sequences:
-         logger.warning("No valid sequences found for metric calculation.")
+         print(f"[WARNING] - {__name__} - No valid sequences found for metric calculation.")
          return {"precision": 0, "recall": 0, "f1": 0, "report": "No valid sequences."}
 
     # Calculate metrics using seqeval
@@ -102,7 +105,9 @@ def calculate_metrics(y_true, y_pred, id_to_ner):
         report_str = classification_report(true_sequences, pred_sequences, zero_division=0)
         # Use macro average F1 score
         f1 = f1_score(true_sequences, pred_sequences, average="macro", zero_division=0)
-
+        
+        print(f"[INFO] - {__name__} - Calculated metrics - Precision: {report_dict['macro avg']['precision']:.4f}, Recall: {report_dict['macro avg']['recall']:.4f}, F1: {f1:.4f}")
+        
         return {
             "precision": report_dict["macro avg"]["precision"],
             "recall": report_dict["macro avg"]["recall"],
@@ -110,9 +115,9 @@ def calculate_metrics(y_true, y_pred, id_to_ner):
             "report": report_str
         }
     except Exception as e:
-        logger.error(f"Error calculating metrics with seqeval: {e}")
-        logger.error(f"True sequences sample: {true_sequences[:2]}")
-        logger.error(f"Pred sequences sample: {pred_sequences[:2]}")
+        print(f"[ERROR] - {__name__} - Error calculating metrics with seqeval: {e}")
+        print(f"[ERROR] - {__name__} - True sequences sample: {true_sequences[:2]}")
+        print(f"[ERROR] - {__name__} - Pred sequences sample: {pred_sequences[:2]}")
         return {"precision": 0, "recall": 0, "f1": 0, "report": f"Error: {e}"}
 
 
